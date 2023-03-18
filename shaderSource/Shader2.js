@@ -134,7 +134,7 @@ vec3 calcDirLight(DirLight light, vec3 ambientColor, vec3 diffuseColor, vec3 spe
     float spec = pow(max(dot(norm, halfwayDir), 0.0), shininess); //Blinn-Phong模型
     vec3 specularLight = spec * light.specular * specularColor;
 
-    return ambientLight + diffuseLight + specularLight;
+    return  ambientLight + diffuseLight + specularLight;
 }
 
 vec3 calcPointLight(PointLight light, vec3 ambientColor, vec3 diffuseColor, vec3 specularColor, float shininess, vec3 norm, vec3 viewDir)

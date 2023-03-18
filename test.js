@@ -13,22 +13,38 @@ function main() {
     init(gl);
 
     let camera = new Camera(45, gl.canvas.width/gl.canvas.height, 0.1, 1000);
-    camera.setPosition(-10, 10, 40);
+    camera.setPosition(10, 0, 30);
+    camera.setTarget(0, 0, 0);
     
-    let directionLight = new DirectionLight({color: 0xffffff, direction: [-1, -1, -2]});
+    let directionLight = new DirectionLight({color: 0xffffff});
 
-    const cube = {
+    const geometry1 = {
+      type: "cylinder",
+      size: [1.6, 4, 2],
+      position: [0, -1.5, 0]
+    }
+    const geometry2 = {
       type: "sphere",
-      size: [10, 10, 10]
+      size: [3, 3, 3],
+      position: [0, 2.7, 0]
     }
-    const material1 = {
-      type: "normal",
-      src: './images/earth.jpg'
+    const material = {
+      type: "light_sensitive",
+      color: 0x330099
     }
-    const mesh1 = new Mesh(cube, material1);
+    const cylinder = new Mesh(geometry1, material);
+    const sphere = new Mesh(geometry2, material);
 
 
+    const group = new Group(cylinder, sphere);
 
-    render(0xFFFFCC, [mesh1], camera, [directionLight]);
+    group.setPosition(10, 0, 0)
+    group.rotateX(Math.PI/2);
+    group.rotateY(Math.PI/2);
+    group.rotateZ(Math.PI/2);
+    
+
+
+    render(0xFFFFCC, [group], camera, [directionLight]);
     
 }

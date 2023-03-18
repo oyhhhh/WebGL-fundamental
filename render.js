@@ -29,9 +29,16 @@ class Camera {
         glMatrix.mat4.perspective(this.perspective, fovy, aspect, near, far);
     }
     setView() {
+        if(!(this.position[0] == 0 && this.position[2] == 0))
         this.view = glMatrix.mat4.lookAt(glMatrix.mat4.create(), this.position, this.target, [0, 1, 0]);
+        else {
+            if(this.position[1] > 0)
+            this.view = glMatrix.mat4.lookAt(glMatrix.mat4.create(), this.position, this.target, [0, 0, -1]);
+            else
+            this.view = glMatrix.mat4.lookAt(glMatrix.mat4.create(), this.position, this.target, [0, 0, 1]);
+        }
     }
-    
+
 }
 
 //平行光类 属性有颜色和方向
@@ -41,10 +48,10 @@ class DirectionLight {
         this.setDirection(object.direction);
     }
     setColor(color) {
-        this.color = color? color : 0xffffff;
+        this.color = color ? color : 0xffffff;
     }
     setDirection(direction) {
-        this.direction = direction? direction : [0, -1, 0];
+        this.direction = direction ? direction : [0, -1, 0];
     }
 }
 
@@ -56,15 +63,15 @@ class PointLight {
         this.setParameter(object.constant, object.linear, object.quadratic);
     }
     setColor(color) {
-        this.color = color? color : 0xffffff;
+        this.color = color ? color : 0xffffff;
     }
     setPosition(position) {
-        this.position = position? position : [0, 100, 0];
+        this.position = position ? position : [0, 100, 0];
     }
     setParameter(constant, linear, quadratic) {
-        this.constant = constant? constant : 1.0;
-        this.linear = linear? linear : 0.09;
-        this.quadratic = quadratic? quadratic : 0.032;
+        this.constant = constant ? constant : 1.0;
+        this.linear = linear ? linear : 0.09;
+        this.quadratic = quadratic ? quadratic : 0.032;
     }
 }
 
@@ -78,25 +85,25 @@ class SpotLight {
         this.setParameter(object.constant, object.linear, object.quadratic);
     }
     setColor(color) {
-        this.color = color? color : 0xffffff;
+        this.color = color ? color : 0xffffff;
     }
     setPosition(position) {
-        this.position = position? position : [0, 100, 0];
+        this.position = position ? position : [0, 100, 0];
     }
     setDirection(direction) {
-        this.direction = direction? direction : [0, -1, 0];
+        this.direction = direction ? direction : [0, -1, 0];
     }
     setRad(cutOff, outerCutOff) {
-        this.cutOff = cutOff? cutOff : Math.cos(12.5/180 * Math.PI);
-        this.outerCutOff = outerCutOff? outerCutOff : Math.cos(17.5/180 * Math.PI);
+        this.cutOff = cutOff ? cutOff : Math.cos(12.5 / 180 * Math.PI);
+        this.outerCutOff = outerCutOff ? outerCutOff : Math.cos(17.5 / 180 * Math.PI);
 
     }
     setParameter(constant, linear, quadratic) {
-        this.constant = constant? constant : 1.0;
-        this.linear = linear? linear : 0.09;
-        this.quadratic = quadratic? quadratic : 0.032;
+        this.constant = constant ? constant : 1.0;
+        this.linear = linear ? linear : 0.09;
+        this.quadratic = quadratic ? quadratic : 0.032;
     }
-    
+
 }
 
 //物体类 组合物体几何形状和材质
@@ -105,22 +112,22 @@ class Mesh {
     constructor(object, material) {
         this.object = object;
         this.material = material;
-        this.position = object.position? object.position : [0, 0, 0];
-        this.size = object.size? object.size : [1, 1, 1];
+        this.position = object.position ? object.position : [0, 0, 0];
+        this.size = object.size ? object.size : [1, 1, 1];
         this.type = object.type;
-        if(material.src) {
+        if (material.src) {
             this.textureID = [];
-            if(typeof material.src == "string") {
-                let texture = new Texture(gl, material.src);  
+            if (typeof material.src == "string") {
+                let texture = new Texture(gl, material.src);
                 this.textureID.push(texture.id);
             } else {
                 material.src.forEach(value => {
-                let texture = new Texture(gl, value);  
-                this.textureID.push(texture.id);
+                    let texture = new Texture(gl, value);
+                    this.textureID.push(texture.id);
                 });
             }
-            
-        } 
+
+        }
         this.radX = 0;
         this.radY = 0;
         this.radZ = 0;
@@ -135,7 +142,7 @@ class Mesh {
     }
     setTexture(material) {
         material.src.forEach(value => {
-            let texture = new Texture(gl, value);  
+            let texture = new Texture(gl, value);
             this.textureID.push(texture.id);
         });
     }
@@ -159,6 +166,9 @@ class Mesh {
         let model = glMatrix.mat4.create();
         let smodel = glMatrix.mat4.create();
         let rmodel = glMatrix.mat4.create();
+        let rmodelx = glMatrix.mat4.create();
+        let rmodely = glMatrix.mat4.create();
+        let rmodelz = glMatrix.mat4.create(); 
         let tmodel = glMatrix.mat4.create();
 
         glMatrix.mat4.scale(smodel, smodel, this.size);
@@ -166,7 +176,10 @@ class Mesh {
         glMatrix.mat4.rotate(rmodel, rmodel, this.radY, [0, 1, 0]);
         glMatrix.mat4.rotate(rmodel, rmodel, this.radZ, [0, 0, 1]);
         glMatrix.mat4.translate(tmodel, tmodel, this.position);
-        
+
+      /*  glMatrix.mat4.multiply(rmodel, rmodely, rmodelx);
+        glMatrix.mat4.multiply(rmodel, rmodelz, rmodel);*/
+
         //先放缩再旋转再平移
         glMatrix.mat4.multiply(model, rmodel, smodel);
         glMatrix.mat4.multiply(model, tmodel, model);
@@ -176,7 +189,7 @@ class Mesh {
         let newMesh = new Mesh(this.object, this.material);
         Object.assign(newMesh, this);
         return newMesh;
-        
+
     }
 
 }
@@ -184,16 +197,14 @@ class Mesh {
 class Group {
     constructor(...meshs) {
         this.group = meshs;
-        //相对位置存储物体第一次设置时的位置
+        //相对位置：存储物体第一次设置时的位置(作为局部坐标)
+        this.relativePos0 = meshs.map(value => value.position);
+        //相对位置(世界坐标内)
         this.relativePos = meshs.map(value => value.position);
-        //为旋转处理提供参数，例如pZ提供在XY平面上物体坐标离整体中相对位置为（0,0）的点的偏移量
-        //thetaZ提供物体的偏移角，即物体相对位置和x轴正方向之间的夹角
-        this.pZ = this.relativePos.map(value => Math.sqrt(value[1] * value[1] + value[0] * value[0]))
-        this.pY = this.relativePos.map(value => Math.sqrt(value[0] * value[0] + value[2] * value[2]))
-        this.pX = this.relativePos.map(value => Math.sqrt(value[2] * value[2] + value[1] * value[1]))
-        this.thetaZ = this.relativePos.map(value => Math.atan2(value[1], value[0]));
-        this.thetaY = this.relativePos.map(value => Math.atan2(value[0], value[2]));
-        this.thetaX = this.relativePos.map(value => Math.atan2(value[2], value[1]));
+        //记录整体的旋转角
+        this.radX = 0;
+        this.radY = 0;
+        this.radZ = 0;
     }
     setPosition(x, y, z) {
         this.position = [x, y, z];
@@ -201,10 +212,10 @@ class Group {
             //物体位移会受相对位置的影响
             value.setPosition(x + this.relativePos[index][0], y + this.relativePos[index][1], z + this.relativePos[index][2])
         })
-        
+
     }
     scale(x, y, z) {
-        this.group.forEach((value,index) => {
+        this.group.forEach((value, index) => {
             //物体放缩会改变相对位置
             this.relativePos[index] = [this.relativePos[index][0] * x, this.relativePos[index][1] * y, this.relativePos[index][2] * z];
             value.scale(x, y, z)
@@ -212,37 +223,51 @@ class Group {
     }
     rotateX(rad) {
         this.group.forEach((value, index) => {
-            //物体旋转是在自己坐标系下旋转，这里为了实现整体的旋转，重新计算物体旋转后的相对位置，从而对物体位置进行更改
-            let value1 = value.position[1] - this.relativePos[index][1];
-            let value2 = value.position[2] - this.relativePos[index][2];
-            this.relativePos[index][1] = this.pX[index] * Math.cos(this.thetaX[index] + rad);
-            this.relativePos[index][2] = this.pX[index] * Math.sin(this.thetaX[index] + rad);
-            value.position[1] = value1 + this.relativePos[index][1];
-            value.position[2] = value2 + this.relativePos[index][2];
+            this.radX = rad;
+            //物体旋转是在自己坐标系下旋转，这里为了实现整体的旋转，重新计算物体旋转后在世界坐标内的相对位置，从而对物体位置进行更改
+            let value0 = this.relativePos[index];
+            this.rotateRelative(index);
+            value.position = value.position.map((value, i) => value + this.relativePos[index][i] - value0[i])
             value.rotateX(rad)
         })
     }
     rotateY(rad) {
         this.group.forEach((value, index) => {
-            let value2 = value.position[2] = value.position[2] - this.relativePos[index][2];
-            let value0 = value.position[0] = value.position[0] - this.relativePos[index][0];
-            this.relativePos[index][2] = this.pY[index] * Math.cos(this.thetaY[index] + rad);
-            this.relativePos[index][0] = this.pY[index] * Math.sin(this.thetaY[index] + rad);
-            value.position[2] = value2 + this.relativePos[index][2];
-            value.position[0] = value0 + this.relativePos[index][0];
+            this.radY = rad;
+            let value0 = this.relativePos[index];
+            this.rotateRelative(index);
+            value.position = value.position.map((value, i) => value + this.relativePos[index][i] - value0[i])
             value.rotateY(rad)
         })
     }
     rotateZ(rad) {
         this.group.forEach((value, index) => {
-            let value0 = value.position[0] - this.relativePos[index][0];
-            let value1 = value.position[1] - this.relativePos[index][1];
-            this.relativePos[index][0] = this.pZ[index] * Math.cos(this.thetaZ[index] + rad);
-            this.relativePos[index][1] = this.pZ[index] * Math.sin(this.thetaZ[index] + rad);
-            value.position[0] = value0 + this.relativePos[index][0];
-            value.position[1] = value1 + this.relativePos[index][1];
+            this.radZ = rad;
+            let value0 = this.relativePos[index];
+            this.rotateRelative(index);
+            value.position = value.position.map((value, i) => value + this.relativePos[index][i] - value0[i])
             value.rotateZ(rad)
         })
+    }
+    //计算旋转后改变的世界坐标内的物体的偏移
+    rotateRelative(index) {
+        let rmodel = glMatrix.mat4.create();
+        
+        //由于物体是在局部坐标系下旋转的 且按照X-Y-Z进行旋转 这里先求出坐标系的旋转矩阵
+        glMatrix.mat4.rotate(rmodel, rmodel, this.radX, [1, 0, 0]);
+        glMatrix.mat4.rotate(rmodel, rmodel, this.radY, [0, 1, 0]);
+        glMatrix.mat4.rotate(rmodel, rmodel, this.radZ, [0, 0, 1]);
+        glMatrix.mat4.invert(rmodel, rmodel) //矩阵求逆
+        
+        //物体的在整体里的局部坐标是不变的 通过逆变换求出世界坐标内的偏移
+        let result0 = glMatrix.vec4.dot(rmodel.slice(0, 4) , [...this.relativePos0[index], 1]);
+        let result1 = glMatrix.vec4.dot(rmodel.slice(4, 8) , [...this.relativePos0[index], 1]);
+        let result2 = glMatrix.vec4.dot(rmodel.slice(8, 12) , [...this.relativePos0[index], 1]);
+        let result3 = glMatrix.vec4.dot(rmodel.slice(12) , [...this.relativePos0[index], 1]);
+       
+        //更新世界坐标的偏移
+        this.relativePos[index] = [result0/result3, result1/result3, result2/result3];
+        
     }
 }
 
@@ -257,7 +282,7 @@ function colorRgb(color) {
 
 //灯光一系列的参数填入着色器中
 function setLightColor(shader, color, lightname) {
-    if(typeof color == 'object') {
+    if (typeof color == 'object') {
         shader.setValue3(`${lightname}.ambient`, colorRgb(color.ambient));
         shader.setValue3(`${lightname}.diffuse`, colorRgb(color.diffuse));
         shader.setValue3(`${lightname}.specular`, colorRgb(color.specular));
@@ -289,12 +314,12 @@ function setLightRad(shader, cutOff, outerCutOff) {
 
 //渲染函数
 function render(backgroundColor, meshs, camera, lights) {
-    
+
     let newmeshs = [];
 
     //group着色需要拆分为单个mesh
     meshs.forEach((ele) => {
-        if(ele.constructor.name == "Group") {
+        if (ele.constructor.name == "Group") {
             newmeshs.push(...ele.group);
         } else {
             newmeshs.push(ele);
@@ -302,10 +327,10 @@ function render(backgroundColor, meshs, camera, lights) {
     })
 
     //由于加载纹理需要异步执行，可能出现绘制之前纹理还没加载好的情况，所以要判读有无纹理再进行渲染
-    if(!newmeshs.every(value => value.material.color)) {
+    if (!newmeshs.every(value => value.material.color)) {
         setTimeout(renderMesh.bind(null, backgroundColor, newmeshs, camera, lights), 100);
-    } else renderMesh(backgroundColor,newmeshs, camera, lights);
-    
+    } else renderMesh(backgroundColor, newmeshs, camera, lights);
+
 }
 
 //渲染是通过shader对物体进行绘制着色，因此每个物体绑定一个着色器，camera/lights负责提供着色器参数
@@ -315,18 +340,18 @@ function renderMesh(backgroundColor, newmeshs, camera, lights) {
 
     gl.clearColor(...colorRgb(backgroundColor), 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
+
     gl.enable(gl.DEPTH_TEST);
 
     newmeshs.forEach(mesh => {
         let shader;
         //两种着色器程序，渲染不同材质的物体采用不同的着色器程序
-        if(mesh.material.type == "normal") {
+        if (mesh.material.type == "normal") {
             shader = shaderArr[0];
-        } else if(mesh.material.type == "light_sensitive") {
+        } else if (mesh.material.type == "light_sensitive") {
             shader = shaderArr[1];
         }
-        
+
         shader.use();
 
         //物体坐标变换
@@ -334,8 +359,8 @@ function renderMesh(backgroundColor, newmeshs, camera, lights) {
         shader.setMatrix4("view", camera.view);
         shader.setMatrix4("model", mesh.model);
 
-        if(mesh.material.type == "normal") {
-            if(mesh.material.color) { //非光照材质且用颜色填充
+        if (mesh.material.type == "normal") {
+            if (mesh.material.color) { //非光照材质且用颜色填充
                 let color = colorRgb(mesh.material.color);
                 shader.setValuei("chooseColor", 1);
                 shader.setValue3("color", color);
@@ -346,18 +371,18 @@ function renderMesh(backgroundColor, newmeshs, camera, lights) {
                 shader.setValuei("texture_normal", 0);
             }
         }
-        else if(mesh.material.type == "light_sensitive") {
+        else if (mesh.material.type == "light_sensitive") {
             let normalMatrix = glMatrix.mat3.create();
-            shader.setMatrix3("normalTransform", glMatrix.mat3.normalFromMat4( normalMatrix, mesh.model ))
+            shader.setMatrix3("normalTransform", glMatrix.mat3.normalFromMat4(normalMatrix, mesh.model))
 
-            if(mesh.material.color) {  //光照材质且用颜色填充
+            if (mesh.material.color) {  //光照材质且用颜色填充
                 let color = colorRgb(mesh.material.color);
                 shader.setValuei("choosematerial", 1);
                 shader.setValue3("material1.ambient", color);
                 shader.setValue3("material1.diffuse", color);
                 shader.setValue3("material1.specular", [1, 1, 1]);
                 shader.setValue("material1.shininess", 32);
-            } 
+            }
             else {   //光照材质且用纹理填充
                 shader.setValuei("choosematerial", 0)
                 gl.activeTexture(gl.TEXTURE0);
@@ -370,26 +395,26 @@ function renderMesh(backgroundColor, newmeshs, camera, lights) {
 
                 shader.setValue("material2.shininess", 32);
             }
-            
+
             //设置光照参数
             shader.setValuei("num1", 0);
             shader.setValuei("num2", 0);
             shader.setValuei("num3", 0);
-            
+
             lights.forEach(light => {
-                if(light.constructor.name == "DirectionLight") {
+                if (light.constructor.name == "DirectionLight") {
                     shader.setValuei("num1", 1);
                     shader.setValue3("viewPos", camera.position);
                     setLightColor(shader, light.color, "dirlight");
                     setLightDirection(shader, light.direction, "dirlight");
-                    
-                } else if(light.constructor.name == "PointLight") {
+
+                } else if (light.constructor.name == "PointLight") {
                     shader.setValuei("num2", 1);
                     shader.setValue3("viewPos", camera.position);
                     setLightColor(shader, light.color, "pointlight");
                     setLightPosition(shader, light.position, "pointlight");
                     setLightParameter(shader, light.constant, light.linear, light.quadratic, "pointlight");
-                } else if(light.constructor.name == "SpotLight") {
+                } else if (light.constructor.name == "SpotLight") {
                     shader.setValuei("num3", 1);
                     shader.setValue3("viewPos", camera.position);
                     setLightColor(shader, light.color, "spotlight");
@@ -402,13 +427,13 @@ function renderMesh(backgroundColor, newmeshs, camera, lights) {
         }
 
         //根据不同的物体形状绑定不同的VAO
-        if(mesh.type == "box") {
+        if (mesh.type == "box") {
             gl.bindVertexArray(vaoArr[0]);
             gl.drawArrays(gl.TRIANGLES, 0, 36);
-        } else if(mesh.type == "sphere") {
+        } else if (mesh.type == "sphere") {
             gl.bindVertexArray(vaoArr[1]);
             gl.drawElements(gl.TRIANGLES, 9000, gl.UNSIGNED_SHORT, 0);
-        } else if(mesh.type == "cylinder") {
+        } else if (mesh.type == "cylinder") {
             gl.bindVertexArray(vaoArr[2]);
             gl.drawArrays(gl.TRIANGLES, 0, 360);
         }
@@ -421,10 +446,10 @@ function renderMesh(backgroundColor, newmeshs, camera, lights) {
 //获取球体的顶点数据
 function getSphere(ySegments, xSegments) {
     let vertices = [];
-    for(let y = 0; y <= ySegments; y++) {
-        for(let x = 0; x <= xSegments; x++) {
-            let radA = y/ySegments * Math.PI;
-            let radB = x/xSegments * 2 * Math.PI;
+    for (let y = 0; y <= ySegments; y++) {
+        for (let x = 0; x <= xSegments; x++) {
+            let radA = y / ySegments * Math.PI;
+            let radB = x / xSegments * 2 * Math.PI;
 
             let xPos = 0.5 * Math.sin(radA) * Math.cos(radB);
             let yPos = 0.5 * Math.cos(radA);
@@ -436,15 +461,15 @@ function getSphere(ySegments, xSegments) {
             vertices.push(2 * xPos);
             vertices.push(2 * yPos);
             vertices.push(2 * zPos);
-            vertices.push(x/xSegments);
-            vertices.push(y/ySegments);
-            
+            vertices.push(x / xSegments);
+            vertices.push(y / ySegments);
+
         }
     }
 
     let indices = [];
-    for(let i = 0; i < ySegments; i++) {
-        for(let j = 0; j < xSegments; j++) {
+    for (let i = 0; i < ySegments; i++) {
+        for (let j = 0; j < xSegments; j++) {
             indices.push(i * (xSegments + 1) + j);
             indices.push((i + 1) * (xSegments + 1) + j);
             indices.push((i + 1) * (xSegments + 1) + j + 1);
@@ -464,8 +489,8 @@ function getCylinder(segments) {
     let verticesT = [];
     let verticesB = [];
     let vertices = [];
-    for(let x = 0; x <= segments; x++) {
-        let rad = x/segments * 2 * Math.PI;
+    for (let x = 0; x <= segments; x++) {
+        let rad = x / segments * 2 * Math.PI;
         let xPos = 0.5 * Math.cos(rad);
         let yPos = 0.5;
         let zPos = 0.5 * Math.sin(rad);
@@ -479,8 +504,8 @@ function getCylinder(segments) {
 
     }
 
-    for(let x = 0; x <= segments; x++) {
-        let rad = x/segments * 2 * Math.PI;
+    for (let x = 0; x <= segments; x++) {
+        let rad = x / segments * 2 * Math.PI;
         let xPos = 0.5 * Math.cos(rad);
         let yPos = -0.5;
         let zPos = 0.5 * Math.sin(rad);
@@ -494,59 +519,59 @@ function getCylinder(segments) {
 
     }
 
-    for(let i = 0; i < segments; i++) {
+    for (let i = 0; i < segments; i++) {
         vertices.push(0, 0.5, 0);
         vertices.push(0, 1, 0);
-        vertices.push(i/segments, 1);
+        vertices.push(i / segments, 1);
 
         vertices.push(verticesT[i].x, verticesT[i].y, verticesT[i].z);
         vertices.push(0, 1, 0);
-        vertices.push(i/segments, 1);
+        vertices.push(i / segments, 1);
 
         vertices.push(verticesT[i + 1].x, verticesT[i + 1].y, verticesT[i + 1].z);
         vertices.push(0, 1, 0);
-        vertices.push((i + 1)/segments, 1);
+        vertices.push((i + 1) / segments, 1);
     }
 
-    for(let i = 0; i < segments; i++) {
+    for (let i = 0; i < segments; i++) {
         vertices.push(0, -0.5, 0);
         vertices.push(0, -1, 0);
-        vertices.push(i/segments, 0);
+        vertices.push(i / segments, 0);
 
         vertices.push(verticesB[i].x, verticesB[i].y, verticesB[i].z);
         vertices.push(0, -1, 0);
-        vertices.push(i/segments, 0);
+        vertices.push(i / segments, 0);
 
         vertices.push(verticesB[i + 1].x, verticesB[i + 1].y, verticesB[i + 1].z);
         vertices.push(0, -1, 0);
-        vertices.push((i + 1)/segments, 0);
+        vertices.push((i + 1) / segments, 0);
     }
 
-    for(let i = 0; i < segments; i++) {
+    for (let i = 0; i < segments; i++) {
 
         vertices.push(verticesT[i].x, verticesT[i].y, verticesT[i].z);
         vertices.push(2 * verticesT[i].x, 0, 2 * verticesT[i].z);
-        vertices.push(i/segments, 1);
+        vertices.push(i / segments, 1);
 
         vertices.push(verticesB[i].x, verticesB[i].y, verticesB[i].z);
         vertices.push(2 * verticesB[i].x, 0, 2 * verticesB[i].z);
-        vertices.push(i/segments, 0);
+        vertices.push(i / segments, 0);
 
         vertices.push(verticesB[i + 1].x, verticesB[i + 1].y, verticesB[i + 1].z);
         vertices.push(2 * verticesB[i + 1].x, 0, 2 * verticesB[i + 1].z);
-        vertices.push((i + 1)/segments, 0);
+        vertices.push((i + 1) / segments, 0);
 
         vertices.push(verticesT[i].x, verticesT[i].y, verticesT[i].z);
         vertices.push(2 * verticesT[i].x, 0, 2 * verticesT[i].z);
-        vertices.push(i/segments, 1);
+        vertices.push(i / segments, 1);
 
         vertices.push(verticesT[i + 1].x, verticesT[i + 1].y, verticesT[i + 1].z);
         vertices.push(2 * verticesT[i + 1].x, 0, 2 * verticesT[i + 1].z);
-        vertices.push((i + 1)/segments, 1);
+        vertices.push((i + 1) / segments, 1);
 
         vertices.push(verticesB[i + 1].x, verticesB[i + 1].y, verticesB[i + 1].z);
         vertices.push(2 * verticesB[i + 1].x, 0, 2 * verticesB[i + 1].z);
-        vertices.push((i + 1)/segments, 0);
+        vertices.push((i + 1) / segments, 0);
     }
 
     let indices = 0;
@@ -560,50 +585,50 @@ function getCylinder(segments) {
 //获取立方体的顶点数据
 function getBox() {
     let vertices = [
-        -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,  0.0,  0.0,
-        0.5, -0.5, -0.5,  0.0,  0.0, -1.0,  1.0,  0.0,
-        0.5,  0.5, -0.5,  0.0,  0.0, -1.0,  1.0,  1.0,
-        0.5,  0.5, -0.5,  0.0,  0.0, -1.0,  1.0,  1.0,
-        -0.5,  0.5, -0.5,  0.0,  0.0, -1.0,  0.0,  1.0,
-        -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,  0.0,  0.0,
-    
-        -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,  0.0,  0.0,
-        0.5, -0.5,  0.5,  0.0,  0.0,  1.0,  1.0,  0.0,
-        0.5,  0.5,  0.5,  0.0,  0.0,  1.0,  1.0,  1.0,
-        0.5,  0.5,  0.5,  0.0,  0.0,  1.0,  1.0,  1.0,
-        -0.5,  0.5,  0.5,  0.0,  0.0,  1.0,  0.0,  1.0,
-        -0.5, -0.5,  0.5,  0.0,  0.0,  1.0,  0.0,  0.0,
-    
-        -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,  1.0,  0.0,
-        -0.5,  0.5, -0.5, -1.0,  0.0,  0.0,  1.0,  1.0,
-        -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,  0.0,  1.0,
-        -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,  0.0,  1.0,
-        -0.5, -0.5,  0.5, -1.0,  0.0,  0.0,  0.0,  0.0,
-        -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,  1.0,  0.0,
-    
-        0.5,  0.5,  0.5,  1.0,  0.0,  0.0,  1.0,  0.0,
-        0.5,  0.5, -0.5,  1.0,  0.0,  0.0,  1.0,  1.0,
-        0.5, -0.5, -0.5,  1.0,  0.0,  0.0,  0.0,  1.0,
-        0.5, -0.5, -0.5,  1.0,  0.0,  0.0,  0.0,  1.0,
-        0.5, -0.5,  0.5,  1.0,  0.0,  0.0,  0.0,  0.0,
-        0.5,  0.5,  0.5,  1.0,  0.0,  0.0,  1.0,  0.0,
-    
-        -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,  0.0,  1.0,
-        0.5, -0.5, -0.5,  0.0, -1.0,  0.0,  1.0,  1.0,
-        0.5, -0.5,  0.5,  0.0, -1.0,  0.0,  1.0,  0.0,
-        0.5, -0.5,  0.5,  0.0, -1.0,  0.0,  1.0,  0.0,
-        -0.5, -0.5,  0.5,  0.0, -1.0,  0.0,  0.0,  0.0,
-        -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,  0.0,  1.0,
-    
-        -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,  0.0,  1.0,
-        0.5,  0.5, -0.5,  0.0,  1.0,  0.0,  1.0,  1.0,
-        0.5,  0.5,  0.5,  0.0,  1.0,  0.0,  1.0,  0.0,
-        0.5,  0.5,  0.5,  0.0,  1.0,  0.0,  1.0,  0.0,
-        -0.5,  0.5,  0.5,  0.0,  1.0,  0.0,  0.0,  0.0,
-        -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,  0.0,  1.0
-    ] 
+        -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 0.0,
+        0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 1.0, 0.0,
+        0.5, 0.5, -0.5, 0.0, 0.0, -1.0, 1.0, 1.0,
+        0.5, 0.5, -0.5, 0.0, 0.0, -1.0, 1.0, 1.0,
+        -0.5, 0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 0.0,
+
+        -0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0,
+        0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 0.0,
+        0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0,
+        0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0,
+        -0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 1.0,
+        -0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0,
+
+        -0.5, 0.5, 0.5, -1.0, 0.0, 0.0, 1.0, 0.0,
+        -0.5, 0.5, -0.5, -1.0, 0.0, 0.0, 1.0, 1.0,
+        -0.5, -0.5, -0.5, -1.0, 0.0, 0.0, 0.0, 1.0,
+        -0.5, -0.5, -0.5, -1.0, 0.0, 0.0, 0.0, 1.0,
+        -0.5, -0.5, 0.5, -1.0, 0.0, 0.0, 0.0, 0.0,
+        -0.5, 0.5, 0.5, -1.0, 0.0, 0.0, 1.0, 0.0,
+
+        0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 1.0, 0.0,
+        0.5, 0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 1.0,
+        0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.0, 1.0,
+        0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.0, 1.0,
+        0.5, -0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0,
+        0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 1.0, 0.0,
+
+        -0.5, -0.5, -0.5, 0.0, -1.0, 0.0, 0.0, 1.0,
+        0.5, -0.5, -0.5, 0.0, -1.0, 0.0, 1.0, 1.0,
+        0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 1.0, 0.0,
+        0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 1.0, 0.0,
+        -0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 0.0, 0.0,
+        -0.5, -0.5, -0.5, 0.0, -1.0, 0.0, 0.0, 1.0,
+
+        -0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0,
+        0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 1.0, 1.0,
+        0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0,
+        0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0,
+        -0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0,
+        -0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0
+    ]
     let indices = 0;
-    
+
     let buffer = new GeometryBuffer(gl, vertices, indices);
 
     return buffer.vao;
@@ -622,7 +647,7 @@ function createVaoArr() {
     vaoArr.push(getBox());
     vaoArr.push(getSphere(30, 50));
     vaoArr.push(getCylinder(30));
-    
+
 }
 
 //初始化，需要获取gl对象
@@ -630,7 +655,7 @@ function init(glInit) {
     gl = glInit;
     createShaderArr();
     createVaoArr();
-    
+
 }
 
-export {Mesh, Group, Camera, DirectionLight, PointLight, SpotLight, render, init};
+export { Mesh, Group, Camera, DirectionLight, PointLight, SpotLight, render, init };
