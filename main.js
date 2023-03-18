@@ -105,8 +105,6 @@ function main() {
     light.push(directionLight);
 
 
-   // render([currentcube, dropcube, group], camera, [directionLight]);
-   // window.addEventListener('resize', render([mesh1, mesh2], camera, [directionLight]));
     
 }
 
