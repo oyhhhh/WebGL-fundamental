@@ -94,8 +94,8 @@ class SpotLight {
         this.direction = direction ? direction : [0, -1, 0];
     }
     setRad(cutOff, outerCutOff) {
-        this.cutOff = cutOff ? cutOff : Math.cos(12.5 / 180 * Math.PI);
-        this.outerCutOff = outerCutOff ? outerCutOff : Math.cos(17.5 / 180 * Math.PI);
+        this.cutOff = cutOff ? Math.cos(cutOff) : Math.cos(12.5 / 180 * Math.PI);
+        this.outerCutOff = outerCutOff ? Math.cos(outerCutOff) : Math.cos(17.5 / 180 * Math.PI);
 
     }
     setParameter(constant, linear, quadratic) {
@@ -166,9 +166,6 @@ class Mesh {
         let model = glMatrix.mat4.create();
         let smodel = glMatrix.mat4.create();
         let rmodel = glMatrix.mat4.create();
-        let rmodelx = glMatrix.mat4.create();
-        let rmodely = glMatrix.mat4.create();
-        let rmodelz = glMatrix.mat4.create(); 
         let tmodel = glMatrix.mat4.create();
 
         glMatrix.mat4.scale(smodel, smodel, this.size);
@@ -176,9 +173,6 @@ class Mesh {
         glMatrix.mat4.rotate(rmodel, rmodel, this.radY, [0, 1, 0]);
         glMatrix.mat4.rotate(rmodel, rmodel, this.radZ, [0, 0, 1]);
         glMatrix.mat4.translate(tmodel, tmodel, this.position);
-
-      /*  glMatrix.mat4.multiply(rmodel, rmodely, rmodelx);
-        glMatrix.mat4.multiply(rmodel, rmodelz, rmodel);*/
 
         //先放缩再旋转再平移
         glMatrix.mat4.multiply(model, rmodel, smodel);
